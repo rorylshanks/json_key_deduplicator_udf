@@ -30,7 +30,11 @@ cp "$ROOT_DIR/testdata/bad_input.tsv" "$USER_FILES_DIR/bad_input.tsv"
 export USER_DATA="$USER_FILES_DIR"
 
 cleanup() {
-  rm -rf "$USER_FILES_DIR"
+  if docker compose -f "$COMPOSE_FILE" ps -q clickhouse >/dev/null 2>&1; then
+    docker compose -f "$COMPOSE_FILE" exec -T clickhouse \
+      sh -c "chown -R $(id -u):$(id -g) /var/lib/clickhouse/user_files" >/dev/null 2>&1 || true
+  fi
+  rm -rf "$USER_FILES_DIR" >/dev/null 2>&1 || true
   docker compose -f "$COMPOSE_FILE" down -v --remove-orphans
 }
 trap cleanup EXIT
