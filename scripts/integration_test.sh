@@ -24,7 +24,13 @@ UDF_BIN="$ROOT_DIR/bin/json_key_dedup_udf-linux-$arch"
 export UDF_BIN
 export COMPOSE_PROJECT_NAME=json_key_dedup_udf
 
+USER_FILES_DIR=$(mktemp -d)
+cp "$ROOT_DIR/testdata/input.tsv" "$USER_FILES_DIR/input.tsv"
+cp "$ROOT_DIR/testdata/bad_input.tsv" "$USER_FILES_DIR/bad_input.tsv"
+export USER_DATA="$USER_FILES_DIR"
+
 cleanup() {
+  rm -rf "$USER_FILES_DIR"
   docker compose -f "$COMPOSE_FILE" down -v --remove-orphans
 }
 trap cleanup EXIT
@@ -41,13 +47,14 @@ until docker compose -f "$COMPOSE_FILE" exec -T clickhouse clickhouse-client --q
   sleep 1
  done
 
-OUTPUT_FILE="$ROOT_DIR/testdata/output.tsv"
+OUTPUT_FILE=$(mktemp)
 
 docker compose -f "$COMPOSE_FILE" exec -T clickhouse clickhouse-client \
   --query "SELECT JSONRemoveDuplicateKeys(x) FROM file('input.tsv', 'TabSeparated', 'x String') ORDER BY JSONExtractUInt(x, 'id') FORMAT TabSeparated" \
   > "$OUTPUT_FILE"
 
 diff -u "$ROOT_DIR/testdata/expected.tsv" "$OUTPUT_FILE"
+rm -f "$OUTPUT_FILE"
 
 set +e
 BAD_LOG=$(mktemp)
