@@ -81,6 +81,8 @@ func (o *objectNode) Dedup() node {
 		return o
 	}
 
+	o.entries = expandDottedEntries(o.entries)
+
 	for i := range o.entries {
 		o.entries[i].value = o.entries[i].value.Dedup()
 	}
@@ -113,6 +115,88 @@ func (o *objectNode) Dedup() node {
 
 	o.entries = filtered
 	return o
+}
+
+func expandDottedEntries(entries []objectEntry) []objectEntry {
+	needsExpand := false
+	for _, entry := range entries {
+		if strings.Contains(entry.key, ".") {
+			needsExpand = true
+			break
+		}
+	}
+	if !needsExpand {
+		return entries
+	}
+
+	expanded := make([]objectEntry, 0, len(entries))
+	for _, entry := range entries {
+		if !strings.Contains(entry.key, ".") {
+			expanded = append(expanded, entry)
+			continue
+		}
+
+		parts := strings.Split(entry.key, ".")
+		if len(parts) == 1 {
+			expanded = append(expanded, entry)
+			continue
+		}
+
+		insertPath(&expanded, parts, entry.value)
+	}
+
+	return expanded
+}
+
+func insertPath(entries *[]objectEntry, parts []string, value node) {
+	if len(parts) == 0 {
+		return
+	}
+	key := parts[0]
+	if len(parts) == 1 {
+		*entries = append(*entries, objectEntry{key: key, value: value})
+		return
+	}
+
+	target := findMergeTarget(*entries, key)
+	if target == nil {
+		target = &objectNode{entries: make([]objectEntry, 0)}
+		*entries = append(*entries, objectEntry{key: key, value: target})
+	}
+
+	insertIntoObject(target, parts[1:], value)
+}
+
+func findMergeTarget(entries []objectEntry, key string) *objectNode {
+	for i := len(entries) - 1; i >= 0; i-- {
+		if entries[i].key != key {
+			continue
+		}
+		if obj, ok := entries[i].value.(*objectNode); ok {
+			return obj
+		}
+		return nil
+	}
+	return nil
+}
+
+func insertIntoObject(obj *objectNode, parts []string, value node) {
+	if len(parts) == 0 {
+		return
+	}
+	key := parts[0]
+	if len(parts) == 1 {
+		obj.entries = append(obj.entries, objectEntry{key: key, value: value})
+		return
+	}
+
+	target := findMergeTarget(obj.entries, key)
+	if target == nil {
+		target = &objectNode{entries: make([]objectEntry, 0)}
+		obj.entries = append(obj.entries, objectEntry{key: key, value: target})
+	}
+
+	insertIntoObject(target, parts[1:], value)
 }
 
 type arrayNode struct {

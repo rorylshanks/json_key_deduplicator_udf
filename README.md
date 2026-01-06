@@ -8,6 +8,7 @@ Rules
 - Nested objects/arrays are processed recursively.
 - Input/output format is `TabSeparated` with one JSON string per row.
 - The UDF exits with a descriptive error on malformed TSV or JSON input.
+- Keys containing dots are treated as paths (e.g. `a.b` is merged into `{ "a": { "b": ... } }`).
 
 Repository layout
 - `cmd/json_key_dedup_udf/main.go`: Go UDF implementation.
