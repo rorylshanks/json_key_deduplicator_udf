@@ -6,6 +6,8 @@ OUT_DIR="$ROOT_DIR/bin"
 
 mkdir -p "$OUT_DIR"
 
+go test ./...
+
 build_target() {
   local arch=$1
   local output="$OUT_DIR/json_key_dedup_udf-linux-$arch"

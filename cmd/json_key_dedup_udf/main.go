@@ -293,7 +293,11 @@ func convertFastJSON(value *fastjson.Value) (node, error) {
 	case fastjson.TypeString:
 		return &valueNode{kind: kindString, str: string(value.GetStringBytes())}, nil
 	case fastjson.TypeNumber:
-		return &valueNode{kind: kindNumber, num: value.String()}, nil
+		num := value.String()
+		if shouldStringifyNumber(num) {
+			return &valueNode{kind: kindString, str: num}, nil
+		}
+		return &valueNode{kind: kindNumber, num: num}, nil
 	case fastjson.TypeTrue:
 		return &valueNode{kind: kindBool, b: true}, nil
 	case fastjson.TypeFalse:
@@ -303,6 +307,40 @@ func convertFastJSON(value *fastjson.Value) (node, error) {
 	default:
 		return nil, fmt.Errorf("unexpected fastjson type %v", value.Type())
 	}
+}
+
+func shouldStringifyNumber(num string) bool {
+	if num == "" {
+		return false
+	}
+	if strings.ContainsAny(num, ".eE") {
+		return false
+	}
+
+	neg := strings.HasPrefix(num, "-")
+	digits := num
+	if neg {
+		digits = num[1:]
+	}
+
+	digits = strings.TrimLeft(digits, "0")
+	if digits == "" {
+		digits = "0"
+	}
+
+	if neg {
+		const minInt64Abs = "9223372036854775808"
+		if len(digits) > len(minInt64Abs) {
+			return true
+		}
+		return len(digits) == len(minInt64Abs) && digits > minInt64Abs
+	}
+
+	const maxInt64 = "9223372036854775807"
+	if len(digits) > len(maxInt64) {
+		return true
+	}
+	return len(digits) == len(maxInt64) && digits > maxInt64
 }
 
 func unescapeTSV(input string) (string, error) {

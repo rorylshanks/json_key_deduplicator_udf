@@ -9,6 +9,7 @@ Rules
 - Input/output format is `TabSeparated` with one JSON string per row.
 - The UDF exits with a descriptive error on malformed TSV or JSON input.
 - Keys containing dots are treated as paths (e.g. `a.b` is merged into `{ "a": { "b": ... } }`).
+- Integer values outside the signed 64-bit range are converted to strings.
 
 Repository layout
 - `cmd/json_key_dedup_udf/main.go`: Go UDF implementation.

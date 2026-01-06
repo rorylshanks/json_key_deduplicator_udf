@@ -54,7 +54,7 @@ until docker compose -f "$COMPOSE_FILE" exec -T clickhouse clickhouse-client --q
 OUTPUT_FILE=$(mktemp)
 
 docker compose -f "$COMPOSE_FILE" exec -T clickhouse clickhouse-client \
-  --query "SELECT JSONRemoveDuplicateKeys(x) FROM file('input.tsv', 'TabSeparated', 'x String') ORDER BY JSONExtractUInt(x, 'id') FORMAT TabSeparated" \
+  --query "SELECT JSONRemoveDuplicateKeys(x) FROM file('input.tsv', 'TabSeparated', 'x String') FORMAT TabSeparated" \
   > "$OUTPUT_FILE"
 
 diff -u "$ROOT_DIR/testdata/expected.tsv" "$OUTPUT_FILE"
