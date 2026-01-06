@@ -1,0 +1,12 @@
+<functions>
+  <function>
+    <type>executable</type>
+    <name>JSONRemoveDuplicateKeys</name>
+    <return_type>String</return_type>
+    <argument>
+      <type>String</type>
+    </argument>
+    <format>TabSeparated</format>
+    <command>json_key_dedup_udf</command>
+  </function>
+</functions>
