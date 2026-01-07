@@ -3,17 +3,32 @@ set -euo pipefail
 
 BENCH_URL="https://clickhouse-public-datasets.s3.amazonaws.com/bluesky/file_0001.json.gz"
 BENCH_DIR="bench"
-DEFAULT_FILE="$BENCH_DIR/benchmark.ndjson.gz"
+DEFAULT_FILE="$BENCH_DIR/benchmark.ndjson"
+DEFAULT_GZ="$DEFAULT_FILE.gz"
 
 file="${1:-$DEFAULT_FILE}"
 app="${2:-bin/json_key_dedup_udf}"
 
 # Download benchmark data if using default file and it doesn't exist
 if [[ "$file" == "$DEFAULT_FILE" && ! -f "$file" ]]; then
-  echo "Downloading benchmark data..." >&2
-  mkdir -p "$BENCH_DIR"
-  curl -fSL --progress-bar -o "$file" "$BENCH_URL"
-  echo "Downloaded to $file" >&2
+  if [[ ! -f "$DEFAULT_GZ" ]]; then
+    echo "Downloading benchmark data..." >&2
+    mkdir -p "$BENCH_DIR"
+    curl -fSL --progress-bar -o "$DEFAULT_GZ" "$BENCH_URL"
+    echo "Downloaded to $DEFAULT_GZ" >&2
+  fi
+  echo "Decompressing benchmark data..." >&2
+  gzip -dc "$DEFAULT_GZ" > "$DEFAULT_FILE"
+fi
+
+# If a gzip file is provided, decompress it before running the benchmark.
+if [[ "$file" == *.gz ]]; then
+  decompressed="${file%.gz}"
+  if [[ ! -f "$decompressed" ]]; then
+    echo "Decompressing $file..." >&2
+    gzip -dc "$file" > "$decompressed"
+  fi
+  file="$decompressed"
 fi
 
 if [[ ! -f "$file" ]]; then

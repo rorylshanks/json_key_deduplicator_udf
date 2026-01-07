@@ -7,7 +7,7 @@ import (
 
 func TestProcessLineErrorsOnMalformedJSON(t *testing.T) {
 	var buf bytes.Buffer
-	err := processLine("{\"a\":", &buf)
+	err := processLine([]byte("{\"a\":"), &buf)
 	if err == nil {
 		t.Fatal("expected error for malformed JSON, got nil")
 	}
