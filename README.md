@@ -6,8 +6,8 @@ Rules
 - For duplicate keys, keep the first value that is not `null` and not an empty string.
 - If all values are empty strings, keep the last occurrence.
 - Nested objects/arrays are processed recursively.
-- Input/output format is `TabSeparated` with one JSON string per row.
-- The UDF exits with a descriptive error on malformed TSV or JSON input.
+- Input/output format is `Raw` with one JSON string per row.
+- The UDF exits with a descriptive error on malformed JSON input.
 - Keys containing dots are treated as paths (e.g. `a.b` is merged into `{ "a": { "b": ... } }`).
 - Integer values outside the signed 64-bit range are converted to strings.
 
@@ -46,6 +46,12 @@ sudo systemctl restart clickhouse-server
 Integration test (Docker Compose)
 ```sh
 scripts/integration_test.sh
+```
+
+Performance benchmark
+```sh
+go build -o bin/json_key_dedup_udf ./cmd/json_key_dedup_udf
+go run ./cmd/perf_bench -target-bytes $((512<<20)) -depth 5 -width 8 -dup 4
 ```
 
 Example

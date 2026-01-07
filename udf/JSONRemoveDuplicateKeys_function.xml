@@ -6,7 +6,7 @@
     <argument>
       <type>String</type>
     </argument>
-    <format>TabSeparated</format>
+    <format>Raw</format>
     <command>json_key_dedup_udf</command>
   </function>
 </functions>
